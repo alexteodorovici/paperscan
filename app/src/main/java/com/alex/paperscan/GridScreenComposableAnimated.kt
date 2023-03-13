@@ -1,6 +1,7 @@
 package com.alex.paperscan
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -38,6 +39,7 @@ fun GridScreenAnimated(viewModel: PaperScanViewModel) {
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun TileCellAnimated(viewModel: PaperScanViewModel, tile: Tile) {
     val isSelected = viewModel.selectedTiles.contains(tile)
@@ -45,71 +47,17 @@ fun TileCellAnimated(viewModel: PaperScanViewModel, tile: Tile) {
     val firstSelectedTile = viewModel.selectedTiles.firstOrNull()
     val density = LocalDensity.current
 
-    var computedX = 0F
-    var computedY = 0F
+    var computedOffset = Offset.Zero
     if (viewModel.mergePressed.value && isSelected && isNotFirst && firstSelectedTile != null) {
-
-        //move tiles backward if first tile is before current tile
-        if (firstSelectedTile.id < tile.id) {
-            //compute X axis
-            if (firstSelectedTile.positionF.x < tile.positionF.x) {
-                //if the first number is smaller we substract
-                computedX = -(tile.positionF.x - firstSelectedTile.positionF.x)
-            } else if (firstSelectedTile.positionF.x > tile.positionF.x) {
-                //if the first number is bigger we add
-                computedX = firstSelectedTile.positionF.x - tile.positionF.x
-            }
-
-            //compute Y axis
-            if (firstSelectedTile.positionF.y < tile.positionF.y) {
-                //if the first number is smaller we substract
-                computedY = -(tile.positionF.y - firstSelectedTile.positionF.y)
-            } else if (firstSelectedTile.positionF.y > tile.positionF.y) {
-                //if the first number is bigger we add
-                computedY = tile.positionF.y + firstSelectedTile.positionF.y
-            }
-        }
-        //move tiles forward if first tile is after current tile
-        else {
-            //compute X axis
-            if (firstSelectedTile.positionF.x < tile.positionF.x) {
-                //if the first number is smaller we substract
-                computedX = -(tile.positionF.x - firstSelectedTile.positionF.x)
-            } else if (firstSelectedTile.positionF.x > tile.positionF.x) {
-                //if the first number is bigger we add
-                computedX = firstSelectedTile.positionF.x - tile.positionF.x
-            }
-
-            //compute Y axis
-            if (firstSelectedTile.positionF.y < tile.positionF.y) {
-
-            } else if (firstSelectedTile.positionF.y > tile.positionF.y) {
-                //if the first number is bigger we substract
-                computedY = firstSelectedTile.positionF.y - tile.positionF.y
-            }
-        }
-
-        println("FIRST TILE: ${firstSelectedTile.id} with offset F: X ${firstSelectedTile.positionF.x} Y ${firstSelectedTile.positionF.y}")
-        println("TILE: ${tile.id} with offset F: X ${tile.positionF.x} Y ${tile.positionF.y}")
-        println("OFFSET: ${tile.id} new coords F: X ${computedX} Y ${computedY}")
+        computedOffset = viewModel.computeOffsetCoordinates(firstSelectedTile, tile)
     }
 
     val offset: Offset by animateOffsetAsState(
-        targetValue = if (viewModel.mergePressed.value && isSelected && isNotFirst)
-            Offset(computedX, computedY) else Offset.Zero,
-        animationSpec = tween(
-            durationMillis = 1000, // duration
-            easing = FastOutSlowInEasing
-        ),
-        finishedListener = {
-        }
+        targetValue = if (viewModel.mergePressed.value && isSelected && isNotFirst) computedOffset else Offset.Zero,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
     )
 
-    val visibleState = remember {
-        MutableTransitionState(false).apply {
-            targetState = true // start the animation immediately
-        }
-    }
+    val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
 
     AnimatedVisibility(
         visibleState = visibleState,
@@ -119,7 +67,6 @@ fun TileCellAnimated(viewModel: PaperScanViewModel, tile: Tile) {
         Box(
             modifier = Modifier
                 .wrapContentSize()
-
                 .onGloballyPositioned { layoutCoordinates ->
                     with(density) {
                         layoutCoordinates
@@ -158,7 +105,6 @@ fun TileCellAnimated(viewModel: PaperScanViewModel, tile: Tile) {
 @Preview(showBackground = true)
 @Composable
 fun GridScreenAnimatedPreview() {
-    val viewModel = PaperScanViewModel()
-    GridScreenAnimated(viewModel = viewModel)
+    GridScreenAnimated(viewModel = PaperScanViewModel())
 }
 

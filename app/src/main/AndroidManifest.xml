@@ -4,25 +4,25 @@
 
     <uses-feature android:name="android.hardware.telephony" android:required="true" />
 
-<!--    <supports-screens-->
-<!--        android:anyDensity="true"-->
-<!--        android:largeScreens="false"-->
-<!--        android:normalScreens="true"-->
-<!--        android:smallScreens="true"-->
-<!--        android:xlargeScreens="false" />-->
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="false"
+        android:normalScreens="true"
+        android:smallScreens="true"
+        android:xlargeScreens="false" />
 
-<!--    <compatible-screens>-->
-<!--        &lt;!&ndash; all small size screens &ndash;&gt;-->
-<!--        <screen android:screenSize="small" android:screenDensity="ldpi" />-->
-<!--        <screen android:screenSize="small" android:screenDensity="mdpi" />-->
-<!--        <screen android:screenSize="small" android:screenDensity="hdpi" />-->
-<!--        <screen android:screenSize="small" android:screenDensity="xhdpi" />-->
-<!--        &lt;!&ndash; all normal size screens &ndash;&gt;-->
-<!--        <screen android:screenSize="normal" android:screenDensity="ldpi" />-->
-<!--        <screen android:screenSize="normal" android:screenDensity="mdpi" />-->
-<!--        <screen android:screenSize="normal" android:screenDensity="hdpi" />-->
-<!--        <screen android:screenSize="normal" android:screenDensity="xhdpi" />-->
-<!--    </compatible-screens>-->
+    <compatible-screens>
+        <!-- all small size screens -->
+        <screen android:screenSize="small" android:screenDensity="ldpi" />
+        <screen android:screenSize="small" android:screenDensity="mdpi" />
+        <screen android:screenSize="small" android:screenDensity="hdpi" />
+        <screen android:screenSize="small" android:screenDensity="xhdpi" />
+        <!-- all normal size screens -->
+        <screen android:screenSize="normal" android:screenDensity="ldpi" />
+        <screen android:screenSize="normal" android:screenDensity="mdpi" />
+        <screen android:screenSize="normal" android:screenDensity="hdpi" />
+        <screen android:screenSize="normal" android:screenDensity="xhdpi" />
+    </compatible-screens>
 
     <application
         android:allowBackup="true"

@@ -1,5 +1,6 @@
 package com.alex.paperscan
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
@@ -16,8 +17,8 @@ data class Tile(
 )
 
 class PaperScanViewModel : ViewModel() {
-    private val maxTileCount = 6
-    private val minTileCount = 4
+    private val maxTileCount = 10
+    private val minTileCount = 2
 
     var tiles = mutableStateListOf<Tile>()
     val selectedTiles = mutableStateListOf<Tile>()
@@ -60,74 +61,82 @@ class PaperScanViewModel : ViewModel() {
             //remember the original tile count for later
             val originalTileCount = tiles.size
 
+            delay(1000) //give time for tile transition animations
+
             //REQ: •	All selected tiles but the first one are removed from the grid.
-            // Remove all selected tiles but the first one from the viewModel's tiles list
-            //        tiles.removeAll(selectedTilesList.drop(1))
             for (i in selectedTilesList.size - 1 downTo 1) {
                 val tile = selectedTilesList[i]
-                delay(1000) // delay each removal by 1000ms
                 tiles.remove(tile)
-//                delay(1000)
             }
 
-            //REQ: •	At the same time new tiles are added at the end of the grid to keep the overall number of tiles equal to original number.
             //REQ: •	And at the same time the rest tiles are compacted right to left and bottom to top to get rid of the holes appeared due to removing tiles.
-            // Add new tiles to the end of the list to maintain the original number of tiles
+            mergePressed.value = false
+            delay(500) //give time for compacting animations
+
+            //REQ: •	At the same time new tiles are added at the end of the grid to keep the overall number of tiles equal to original number.
             val tilesToAdd = originalTileCount - tiles.size
             for (i in 0 until tilesToAdd) {
                 val tileWithHighestId = tiles.maxByOrNull { it.id }
                 tileWithHighestId?.let {
                     tiles.add(Tile(id = tileWithHighestId.id + 1))
                 }
-                delay(500)
+                delay(500) //give time for tile add animations
             }
 
             //REQ: •	At the same time the first selected tile is deselected
-            // Clear the list of selected tiles and add the first selected tile if it exists
             selectedTiles.clear()
-            delay(3000L)
-            mergePressed.value = false
         }
     }
 
+    fun computeOffsetCoordinates(firstSelectedTile: Tile, tile: Tile): Offset {
+        var computedX = 0F
+        var computedY = 0F
+        //move tiles backward if first tile is before current tile
+        if (firstSelectedTile.id < tile.id) {
+            //compute X axis
+            if (firstSelectedTile.positionF.x < tile.positionF.x) {
+                //if the first tile number is smaller we substract
+                computedX = -(tile.positionF.x - firstSelectedTile.positionF.x)
+            } else if (firstSelectedTile.positionF.x > tile.positionF.x) {
+                //if the first tile number is bigger we substract
+                computedX = firstSelectedTile.positionF.x - tile.positionF.x
+            }
 
-//    fun mergeTiles() {
-//        viewModelScope.launch {
-//            //duplicate the list of selected tiles
-//            val selectedTilesList = selectedTiles.toList()
-//
-//            //remember the original tile count for later
-//            val originalTileCount = tiles.size
-//
-//            //REQ: •	All selected tiles but the first one are removed from the grid.
-//            // Remove all selected tiles but the first one from the viewModel's tiles list
-//            //        tiles.removeAll(selectedTilesList.drop(1))
-//            for (i in selectedTilesList.size - 1 downTo 1) {
-//                val tile = selectedTilesList[i]
-//                tiles.remove(tile)
-//                delay(1000L)
-//            }
-//
-//            //REQ: •	At the same time new tiles are added at the end of the grid to keep the overall number of tiles equal to original number.
-//            //REQ: •	And at the same time the rest tiles are compacted right to left and bottom to top to get rid of the holes appeared due to removing tiles.
-//            // Add new tiles to the end of the list to maintain the original number of tiles
-//            val tilesToAdd = originalTileCount - tiles.size
-//            for (i in 0 until tilesToAdd) {
-//                val tileWithHighestId = tiles.maxByOrNull { it.id }
-//                tileWithHighestId?.let {
-//                    tiles.add(Tile(id = tileWithHighestId.id + 1))
-//                }
-//                delay(1000L) // delay each removal by 1000ms
-//            }
-//
-//            //REQ: •	At the same time the first selected tile is deselected
-//            // Clear the list of selected tiles and add the first selected tile if it exists
-//            selectedTiles.clear()
-//            delay(1000L) // delay each removal by 1000ms
-//        }
-//    }
+            //compute Y axis
+            if (firstSelectedTile.positionF.y < tile.positionF.y) {
+                //if the first tile number is smaller we substract
+                computedY = -(tile.positionF.y - firstSelectedTile.positionF.y)
+            } else if (firstSelectedTile.positionF.y > tile.positionF.y) {
+                //if the first tile number is bigger we add
+                computedY = tile.positionF.y + firstSelectedTile.positionF.y
+            }
+        }
+        //move tiles forward if first tile is after current tile
+        else {
+            //compute X axis
+            if (firstSelectedTile.positionF.x < tile.positionF.x) {
+                //if the first tile number is smaller we substract
+                computedX = -(tile.positionF.x - firstSelectedTile.positionF.x)
+            } else if (firstSelectedTile.positionF.x > tile.positionF.x) {
+                //if the first tile number is bigger we substract
+                computedX = firstSelectedTile.positionF.x - tile.positionF.x
+            }
 
+            //compute Y axis
+            if (firstSelectedTile.positionF.y < tile.positionF.y) {
+                //if the first tile number is bigger we substract
+                computedY = -(firstSelectedTile.positionF.y - tile.positionF.y)
+            } else if (firstSelectedTile.positionF.y > tile.positionF.y) {
+                //if the first tile number is bigger we substract
+                computedY = firstSelectedTile.positionF.y - tile.positionF.y
+            }
+        }
 
+        Log.d("PaperScanViewModel", "FIRST TILE: ${firstSelectedTile.id} with offset F: X ${firstSelectedTile.positionF.x} Y ${firstSelectedTile.positionF.y}")
+        Log.d("PaperScanViewModel", "TILE: ${tile.id} with offset F: X ${tile.positionF.x} Y ${tile.positionF.y}")
+        Log.d("PaperScanViewModel", "OFFSET: ${tile.id} new coords F: X $computedX Y $computedY")
+        return Offset(computedX, computedY)
+    }
 }
 
 

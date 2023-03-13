@@ -70,8 +70,7 @@ fun MainScreen(viewModel: PaperScanViewModel) {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    val viewModel = PaperScanViewModel()
-    MainScreen(viewModel = viewModel)
+    MainScreen(viewModel = PaperScanViewModel())
 }
 
 

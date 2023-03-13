@@ -1,9 +1,7 @@
 package com.alex.paperscan
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -13,11 +11,17 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -37,6 +41,69 @@ fun GridScreenAnimated(viewModel: PaperScanViewModel) {
 @Composable
 fun TileCellAnimated(viewModel: PaperScanViewModel, tile: Tile) {
     val isSelected = viewModel.selectedTiles.contains(tile)
+    val isNotFirst = viewModel.selectedTiles.indexOf(tile) > 0
+    val firstSelectedTile = viewModel.selectedTiles.firstOrNull()
+    val density = LocalDensity.current
+
+    var computedX = 0F
+    var computedY = 0F
+    if (viewModel.mergePressed.value && isSelected && isNotFirst && firstSelectedTile != null) {
+
+        //move tiles backward if first tile is before current tile
+        if (firstSelectedTile.id < tile.id) {
+            //compute X axis
+            if (firstSelectedTile.positionF.x < tile.positionF.x) {
+                //if the first number is smaller we substract
+                computedX = -(tile.positionF.x - firstSelectedTile.positionF.x)
+            } else if (firstSelectedTile.positionF.x > tile.positionF.x) {
+                //if the first number is bigger we add
+                computedX = firstSelectedTile.positionF.x - tile.positionF.x
+            }
+
+            //compute Y axis
+            if (firstSelectedTile.positionF.y < tile.positionF.y) {
+                //if the first number is smaller we substract
+                computedY = -(tile.positionF.y - firstSelectedTile.positionF.y)
+            } else if (firstSelectedTile.positionF.y > tile.positionF.y) {
+                //if the first number is bigger we add
+                computedY = tile.positionF.y + firstSelectedTile.positionF.y
+            }
+        }
+        //move tiles forward if first tile is after current tile
+        else {
+            //compute X axis
+            if (firstSelectedTile.positionF.x < tile.positionF.x) {
+                //if the first number is smaller we substract
+                computedX = -(tile.positionF.x - firstSelectedTile.positionF.x)
+            } else if (firstSelectedTile.positionF.x > tile.positionF.x) {
+                //if the first number is bigger we add
+                computedX = firstSelectedTile.positionF.x - tile.positionF.x
+            }
+
+            //compute Y axis
+            if (firstSelectedTile.positionF.y < tile.positionF.y) {
+
+            } else if (firstSelectedTile.positionF.y > tile.positionF.y) {
+                //if the first number is bigger we substract
+                computedY = firstSelectedTile.positionF.y - tile.positionF.y
+            }
+        }
+
+        println("FIRST TILE: ${firstSelectedTile.id} with offset F: X ${firstSelectedTile.positionF.x} Y ${firstSelectedTile.positionF.y}")
+        println("TILE: ${tile.id} with offset F: X ${tile.positionF.x} Y ${tile.positionF.y}")
+        println("OFFSET: ${tile.id} new coords F: X ${computedX} Y ${computedY}")
+    }
+
+    val offset: Offset by animateOffsetAsState(
+        targetValue = if (viewModel.mergePressed.value && isSelected && isNotFirst)
+            Offset(computedX, computedY) else Offset.Zero,
+        animationSpec = tween(
+            durationMillis = 1000, // duration
+            easing = FastOutSlowInEasing
+        ),
+        finishedListener = {
+        }
+    )
 
     val visibleState = remember {
         MutableTransitionState(false).apply {
@@ -46,13 +113,27 @@ fun TileCellAnimated(viewModel: PaperScanViewModel, tile: Tile) {
 
     AnimatedVisibility(
         visibleState = visibleState,
-        enter = fadeIn(animationSpec = TweenSpec(1000, 0)),
-        exit = fadeOut(animationSpec = TweenSpec(1000, 0, FastOutLinearInEasing))
+        enter = fadeIn(animationSpec = TweenSpec(500, 0)),
+        exit = fadeOut(animationSpec = TweenSpec(500, 0, FastOutLinearInEasing))
     ) {
         Box(
             modifier = Modifier
                 .wrapContentSize()
+
+                .onGloballyPositioned { layoutCoordinates ->
+                    with(density) {
+                        layoutCoordinates
+                            .positionInWindow()
+                            .run {
+                                tile.position = DpOffset(x = x.toDp(), y = y.toDp())
+                                tile.positionF = Offset(x = x, y = y)
+                            }
+                    }
+                }
                 .padding(top = 40.dp, bottom = 40.dp)
+                .offset(
+                    x = with(LocalDensity.current) { offset.x.toDp() },
+                    y = with(LocalDensity.current) { offset.y.toDp() })
                 .clickable {
                     if (isSelected) {
                         viewModel.deselectTile(tile)

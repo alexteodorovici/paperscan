@@ -18,7 +18,7 @@ data class Tile(
 
 class PaperScanViewModel : ViewModel() {
     private val maxTileCount = 10
-    private val minTileCount = 2
+    private val minTileCount = 10
 
     var tiles = mutableStateListOf<Tile>()
     val selectedTiles = mutableStateListOf<Tile>()
